@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Lambda function resources
+
+Parameters:
+    stage:
+        Type: String
+    dynamodbTablePayWeeks:
+        Type: String
+
+Globals:
+    Function:
+        Runtime: python3.7
+        Handler: handler.handler
+        MemorySize: 128
+        Timeout: 30
+        Tracing: Active
+        Layers:
+            - !Ref layerMain
+        Environment:
+            Variables:
+                STAGE: !Ref stage
+
+Resources:
+    layerMain:
+        Type: AWS::Serverless::LayerVersion
+        Properties:
+            LayerName: pagerpay-main
+            Description: Includes libraries requests, AWS X-Ray SDK and pdpyras
+            ContentUri: ../../sam/layers/main/pagerpay_main_layer.zip
+            CompatibleRuntimes:
+                - python3.7
+            RetentionPolicy: Retain
+
+    functionHelperServices:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Join [ "-", [ "pagerpay-helper-services", !Ref stage ] ]
+            Description: Checks PagerDuty for list of services and updates DynamoDB
+            CodeUri: ../../sam/functions/helper-services
+            Timeout: 60
+            Policies:
+                - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+                - DynamoDBCrudPolicy:
+                    TableName: !Ref dynamodbTableServices
+                - SSMParameterReadPolicy:
+                    ParameterName: !Ref parameterPagerdutyKey
+            Events:
+                DailyScheduledEvent:
+                    Type: Schedule
+                    Properties:
+                        Schedule: rate(1 day)
+            Environment:
+                Variables:
+                    TABLE_SERVICES: !Ref dynamodbTableServices
+                    PARAMETER_PAGERDUTYKEY: !Ref parameterPagerdutyKey
+
+Outputs:
+    functionPagerdutyCheckerArn:
+        Value: !GetAtt functionPagerdutyChecker.Arn
+        Description: Lambda function functionPagerdutyChecker Arn
+

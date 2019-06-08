@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: DynamoDB table resources
+
+Parameters:
+    stage:
+        Type: String
+
+Resources:
+    tablePayWeeks:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            AttributeDefinitions:
+                -
+                    AttributeName: year
+                    AttributeType: "N"
+                -
+                    AttributeName: week
+                    AttributeType: "N"
+            KeySchema:
+                -
+                    AttributeName: year
+                    KeyType: HASH
+                -
+                    AttributeName: week
+                    KeyType: RANGE
+            BillingMode: PAY_PER_REQUEST
+
+Outputs:
+    dynamodbTablePayWeeks:
+        Value: !Ref tablePayWeeks
+        Description: Pay Week table
+        Export:
+            Name: !Sub "pagerpay-table-payweeks-${stage}"

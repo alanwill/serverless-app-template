@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: SSM Parameter Store resources
+
+Parameters:
+    stage:
+        Type: String
+
+Resources:
+    parameterPagerdutyKey:
+        Type: "AWS::SSM::Parameter"
+        Properties:
+            Name: !Sub "/pagerpay/${stage}/pagerdutyKey"
+            Type: "String"
+            Value: "***Enter your PagerDuty API Key here***"
+            Description: "PagerDuty API Key"
+            Tags:
+                "Environment": !Ref stage
+
+Outputs:
+    parameterPagerdutyKey:
+        Value: !Ref parameterPagerdutyKey
+        Description: SSM parameter name parameterPagerdutyKey
+
+
